@@ -1,0 +1,74 @@
+name: Build KHELRUN AI Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Windows x64 installer
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Show tool versions
+        shell: pwsh
+        run: dotnet --info
+
+      - name: Restore NuGet packages
+        run: dotnet restore .\KhelrunAI.csproj --runtime win-x64 --verbosity minimal
+
+      - name: Build Release x64
+        run: dotnet build .\KhelrunAI.csproj -c Release -r win-x64 --no-restore --self-contained true --nologo
+
+      - name: Publish self-contained x64
+        run: dotnet publish .\KhelrunAI.csproj -c Release -r win-x64 --self-contained true --no-restore -o .\publish /p:DebugSymbols=false /p:DebugType=None /p:PublishSingleFile=false /p:PublishTrimmed=false /p:UseAppHost=true
+
+      - name: Validate publish output
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD 'publish\KhelrunAI.exe'
+          if (-not (Test-Path $exe)) { throw "KhelrunAI.exe was not produced." }
+
+          $models = Get-ChildItem .\publish -Recurse -File | Where-Object {
+            $_.Extension.ToLowerInvariant() -in @('.gguf','.safetensors','.ckpt','.pt','.onnx')
+          }
+          if ($models) { throw "AI model files must not be bundled in the installer." }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build KHELRUN AI installer
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler was not found." }
+          & $iscc '.\installer\KhelrunAI.iss'
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+
+          $installer = Join-Path $PWD 'dist\KhelrunAI-Setup.exe'
+          if (-not (Test-Path $installer)) { throw "KhelrunAI-Setup.exe was not produced." }
+
+      - name: Upload KHELRUN AI installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: KhelrunAI-Windows-x64-Installer
+          path: dist/KhelrunAI-Setup.exe
+          if-no-files-found: error
+          retention-days: 30
