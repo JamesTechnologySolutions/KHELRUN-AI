@@ -49,11 +49,11 @@
     <!-- Maximum compatibility backends (all same version).
          LLamaSharp auto-selects the best available at runtime:
          CUDA 12 (best for modern NVIDIA) → CUDA 11 (older NVIDIA) → Vulkan (AMD/Intel/NVIDIA without CUDA) → CPU. -->
-    <PackageReference Include="LLamaSharp" Version="0.25.0" />
-    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.25.0" />
-    <PackageReference Include="LLamaSharp.Backend.Cuda11" Version="0.25.0" />
-    <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.25.0" />
-    <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.25.0" />
+    <PackageReference Include="LLamaSharp" Version="0.24.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.24.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cuda11" Version="0.24.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.24.0" />
+    <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.24.0" />
   </ItemGroup>
 
 </Project>
