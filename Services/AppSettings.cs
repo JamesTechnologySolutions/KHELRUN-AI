@@ -24,9 +24,11 @@ public sealed class AppSettings
     public double FontSize { get; set; } = 14.5;
     public string SystemPrompt { get; set; } = DefaultPrompt;
     public double Temperature { get; set; } = 0.75;
-    public int MaxTokens { get; set; } = 1536;
-    public int ContextSize { get; set; } = 4096;
-    public int Threads { get; set; } = 0;                 // 0 = automatic
+    public int MaxTokens { get; set; } = 2048;
+    public int ContextSize { get; set; } = 8192;
+    public int Threads { get; set; } = 0;
+    public int GpuLayers { get; set; } = -1;
+    public int BatchSize { get; set; } = 512;
     public bool WebSearch { get; set; } = true;
     public int WebResults { get; set; } = 5;
     public bool AutoLoadLastModel { get; set; } = true;
@@ -44,7 +46,7 @@ public sealed class AppSettings
             if (File.Exists(FilePath))
                 return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(FilePath)) ?? new AppSettings();
         }
-        catch { /* corrupt file: fall back to defaults */ }
+        catch { }
         return new AppSettings();
     }
 
@@ -55,6 +57,6 @@ public sealed class AppSettings
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             File.WriteAllText(FilePath, JsonSerializer.Serialize(this, new JsonSerializerOptions { WriteIndented = true }));
         }
-        catch { /* settings are non-critical */ }
+        catch { }
     }
 }
