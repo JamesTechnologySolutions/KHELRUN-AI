@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>KhelrunAI</AssemblyName>
+    <RootNamespace>KhelrunAI</RootNamespace>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- Bundle the .NET runtime so users don't need to install anything. -->
+    <SelfContained>true</SelfContained>
+    <!-- Deliberately NOT single-file: llama.cpp's native libraries must stay as normal files next to the exe.
+         The installer gives the one-file download experience instead. -->
+    <PublishSingleFile>false</PublishSingleFile>
+
+    <!-- Version info shown in file properties and the installer. -->
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Product>KHELRUN AI</Product>
+    <Company>JTS</Company>
+    <Authors>JTS (James Technology Solutions)</Authors>
+    <Description>KHELRUN AI — Private, unrestricted local AI by JTS. Chat + model library for your PC.</Description>
+    <Copyright>Copyright (c) 2026 JTS</Copyright>
+    <AssemblyTitle>KHELRUN AI</AssemblyTitle>
+    <ApplicationIcon>Assets\KhelrunAI.ico</ApplicationIcon>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+  </PropertyGroup>
+
+  <!-- AI models are intentionally never bundled. Users download/import them separately. -->
+
+
+  <ItemGroup>
+    <!-- Copy legal documents into the published output so they are available after install. -->
+    <None Include="legal\EULA.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="legal\PrivacyPolicy.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <!-- Window title-bar icon (pack URI) + copy next to exe as fallback -->
+    <Resource Include="Assets\KhelrunAI.ico" />
+    <None Include="Assets\KhelrunAI.ico" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Versions: if NuGet reports one missing, pick the newest matching pair (both packages must share the same version). -->
+    <PackageReference Include="LLamaSharp" Version="0.25.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.25.0" />
+  </ItemGroup>
+
+</Project>

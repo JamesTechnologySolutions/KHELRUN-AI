@@ -1,0 +1,47 @@
+KHELRUN AI — PRIVACY POLICY
+Version 1.0.0 — 2026
+Publisher: JTS (James Technology Solutions)
+
+This Privacy Policy explains how KHELRUN AI ("the Software") handles information when you use it.
+
+1. LOCAL-FIRST DESIGN
+KHELRUN AI is designed to run AI models on your own computer. By default:
+- Your conversations remain on your device.
+- Downloaded models are stored on your device.
+- Application settings are stored in your user profile (%AppData%\KhelrunAI).
+
+Publisher does not receive the content of your chats or the text of prompts you send to local models.
+
+2. INFORMATION STORED LOCALLY
+The Software stores on your computer:
+- Application preferences (theme, temperature, system prompt, etc.)
+- Paths to models you have used or imported
+- Conversation history (if you choose to keep it)
+- Downloaded model files
+
+You can clear settings, conversations, and models from within the application or by deleting the corresponding folders.
+
+3. NETWORK ACTIVITY
+The Software may contact the internet for:
+- Downloading AI models from public repositories (e.g., Hugging Face) when you request a download
+- Optional web search (DuckDuckGo HTML endpoint) when the web-search feature is enabled
+- Checking for application updates (if enabled)
+
+These requests do not include the content of your private conversations with local models. Web search queries are sent only when you enable the feature and ask a question that triggers search.
+
+4. OPTIONAL TELEMETRY
+The current version of KHELRUN AI does not send usage analytics or crash reports to Publisher by default. If future versions add optional diagnostic telemetry, it will be disabled by default and clearly disclosed in Settings, and you will be able to turn it off.
+
+5. THIRD-PARTY SERVICES
+When you download models from third-party repositories or use web search, those services operate under their own privacy policies. Publisher is not responsible for the privacy practices of Hugging Face, DuckDuckGo, or other external sites.
+
+6. CHILDREN
+The Software is not directed at children under 13. Publisher does not knowingly collect personal information from children.
+
+7. CHANGES
+We may update this Privacy Policy. The version number and date at the top will change. Continued use of the Software after changes constitutes acceptance of the updated policy where permitted by law.
+
+8. CONTACT
+For privacy-related questions about KHELRUN AI, contact JTS (James Technology Solutions) through the contact channels published with the product.
+
+© 2026 JTS (James Technology Solutions). All rights reserved.

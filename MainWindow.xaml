@@ -1,0 +1,115 @@
+<Window x:Class="KhelrunAI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="KHELRUN AI"
+        Icon="pack://application:,,,/Assets/KhelrunAI.ico" Height="820" Width="1180" MinHeight="560" MinWidth="900"
+        Background="{DynamicResource Bg}" Foreground="{DynamicResource Fg}"
+        FontFamily="Segoe UI Variable, Segoe UI" FontSize="14.5"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="72"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Slim icon sidebar -->
+        <Border Grid.Column="0" Background="{DynamicResource SidebarBg}" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,1,0">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="0,18,0,0" HorizontalAlignment="Center">
+                    <!-- Logo mark -->
+                    <Border Width="42" Height="42" CornerRadius="12" Background="{DynamicResource Accent}" Margin="0,0,0,22">
+                        <TextBlock Text="K" FontSize="22" FontWeight="Bold" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <Button x:Name="NavChat" Style="{StaticResource GhostButton}" Padding="10" Margin="8,0,8,6"
+                            ToolTip="Chat" Click="NavChat_Click" Background="{DynamicResource PanelElevated}">
+                        <TextBlock Text="💬" FontSize="18" HorizontalAlignment="Center"/>
+                    </Button>
+                    <Button x:Name="NavModels" Style="{StaticResource GhostButton}" Padding="10" Margin="8,0,8,6"
+                            ToolTip="Models" Click="NavModels_Click">
+                        <TextBlock Text="🧠" FontSize="18" HorizontalAlignment="Center"/>
+                    </Button>
+                    <Button x:Name="NavImage" Style="{StaticResource GhostButton}" Padding="10" Margin="8,0,8,6"
+                            ToolTip="Image creation" Click="NavImage_Click">
+                        <TextBlock Text="🎨" FontSize="18" HorizontalAlignment="Center"/>
+                    </Button>
+                    <Button x:Name="NavSettings" Style="{StaticResource GhostButton}" Padding="10" Margin="8,0,8,6"
+                            ToolTip="Settings" Click="Settings_Click">
+                        <TextBlock Text="⚙️" FontSize="18" HorizontalAlignment="Center"/>
+                    </Button>
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,16" HorizontalAlignment="Center">
+                    <Button Style="{StaticResource GhostButton}" Padding="10" Margin="8,0,8,6"
+                            ToolTip="Toggle theme" Click="Theme_Click">
+                        <TextBlock x:Name="ThemeIcon" Text="🌙" FontSize="16" HorizontalAlignment="Center"/>
+                    </Button>
+                    <TextBlock Text="JTS" FontSize="10" Foreground="{DynamicResource Muted}"
+                               HorizontalAlignment="Center" Margin="0,8,0,0" Opacity="0.7"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Top bar -->
+            <Border Grid.Row="0" Background="{DynamicResource Panel}" Padding="20,14" BorderBrush="{DynamicResource Border}" BorderThickness="0,0,0,1">
+                <DockPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="KHELRUN AI" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Border Background="{DynamicResource AccentDim}" CornerRadius="6" Padding="8,3" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="by JTS" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource Fg}" Opacity="0.9"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                        <CheckBox x:Name="WebToggle" Content="Web search" Click="WebToggle_Click"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"/>
+                        <Button x:Name="ExportBtn" Content="Export" Style="{StaticResource GhostButton}"
+                                Click="Export_Click" Padding="14,8" Margin="0,0,8,0"/>
+                        <Button x:Name="NewChatBtn" Content="New chat" Style="{StaticResource GhostButton}"
+                                Click="NewChat_Click" Padding="14,8"/>
+                    </StackPanel>
+
+                    <TextBlock x:Name="StatusText" Text="No model loaded" Foreground="{DynamicResource Muted}"
+                               VerticalAlignment="Center" Margin="24,0,16,0" TextTrimming="CharacterEllipsis"/>
+                </DockPanel>
+            </Border>
+
+            <!-- Chat area -->
+            <ScrollViewer x:Name="ChatScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,12">
+                <StackPanel x:Name="ChatPanel" Margin="28,8,28,16"/>
+            </ScrollViewer>
+
+            <ProgressBar x:Name="Busy" Grid.Row="2" Height="3" IsIndeterminate="True" Visibility="Collapsed"
+                         Foreground="{DynamicResource Accent}" Background="Transparent" BorderThickness="0"/>
+
+            <!-- Composer -->
+            <Border Grid.Row="3" Background="{DynamicResource Panel}" Padding="20,16" BorderBrush="{DynamicResource Border}" BorderThickness="0,1,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="InputBox" Grid.Column="0" AcceptsReturn="True" TextWrapping="Wrap"
+                             MinHeight="48" MaxHeight="160" VerticalScrollBarVisibility="Auto"
+                             PreviewKeyDown="InputBox_PreviewKeyDown"
+                             ToolTip="Message KHELRUN AI…  (Enter to send, Shift+Enter for new line)"/>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Bottom">
+                        <Button x:Name="SendBtn" Content="Send  →" Click="Send_Click" IsEnabled="False" MinWidth="110"/>
+                        <Button x:Name="StopBtn" Content="Stop" Click="Stop_Click" Visibility="Collapsed"
+                                Background="{DynamicResource Danger}" MinWidth="110"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
