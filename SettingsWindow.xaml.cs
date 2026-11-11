@@ -26,10 +26,25 @@ public partial class SettingsWindow : Window
         ResultsSlider.Value = _s.WebResults;
         ContextSlider.Value = _s.ContextSize;
         ThreadSlider.Value = _s.Threads;
+        GpuLayersSlider.Value = _s.GpuLayers;
+        BatchSlider.Value = _s.BatchSize;
         AutoLoadCheck.IsChecked = _s.AutoLoadLastModel;
         AutoBestCheck.IsChecked = _s.AutoDownloadBestModel;
 
+        UpdateGpuLabel();
         _ready = true;
+    }
+
+    private void GpuLayersSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (!_ready) return;
+        UpdateGpuLabel();
+    }
+
+    private void UpdateGpuLabel()
+    {
+        int v = (int)Math.Round(GpuLayersSlider.Value);
+        GpuLayersLabel.Text = v < 0 ? "Auto" : v == 0 ? "CPU only" : v.ToString();
     }
 
     private void Theme_Checked(object sender, RoutedEventArgs e)
@@ -65,6 +80,8 @@ public partial class SettingsWindow : Window
         _s.WebResults = (int)Math.Round(ResultsSlider.Value);
         _s.ContextSize = (int)Math.Round(ContextSlider.Value);
         _s.Threads = (int)Math.Round(ThreadSlider.Value);
+        _s.GpuLayers = (int)Math.Round(GpuLayersSlider.Value);
+        _s.BatchSize = (int)Math.Round(BatchSlider.Value);
         _s.AutoLoadLastModel = AutoLoadCheck.IsChecked == true;
         _s.AutoDownloadBestModel = AutoBestCheck.IsChecked == true;
         DialogResult = true;
