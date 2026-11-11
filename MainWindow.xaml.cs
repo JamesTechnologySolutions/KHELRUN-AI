@@ -31,6 +31,7 @@ public partial class MainWindow : Window
         AddBubble(
             "Welcome to **KHELRUN AI** by JTS.\n\n" +
             "Private, unrestricted local AI that runs entirely on your PC.\n" +
+            "• CPU + GPU acceleration (CUDA / Vulkan when available)\n" +
             "• Chat models download automatically (best match for your hardware)\n" +
             "• Import any GGUF chat model or image model files\n" +
             "• Right-click any message to copy it\n\n" +
@@ -40,10 +41,6 @@ public partial class MainWindow : Window
         Loaded += async (_, _) => await StartupModelAsync();
     }
 
-    /// <summary>
-    /// On launch: reload last model, else pick a bundled/downloaded one,
-    /// else auto-recommend + download the best model for this machine.
-    /// </summary>
     private async Task StartupModelAsync()
     {
         if (!_settings.AutoLoadLastModel) return;
@@ -57,7 +54,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        // No model present — auto-select best for this hardware
         if (_settings.AutoDownloadBestModel)
         {
             var best = ModelCatalog.RecommendBestChatModel();
@@ -113,12 +109,7 @@ public partial class MainWindow : Window
             await LoadModelAsync(win.SelectedPath);
     }
 
-    // ---------- Navigation ----------
-
-    private void NavChat_Click(object sender, RoutedEventArgs e)
-    {
-        // Already on chat; could highlight later
-    }
+    private void NavChat_Click(object sender, RoutedEventArgs e) => ChatScroll.Focus();
 
     private async void NavModels_Click(object sender, RoutedEventArgs e) => await PickModelAsync();
 
@@ -126,7 +117,6 @@ public partial class MainWindow : Window
     {
         var win = new ModelsWindow(ModelKind.Image) { Owner = this };
         win.ShowDialog();
-        // Image models are tracked; full diffusion backend can be plugged in later.
         if (win.SelectedPath != null)
         {
             _settings.LastImageModelPath = win.SelectedPath;
@@ -141,8 +131,6 @@ public partial class MainWindow : Window
         }
     }
 
-    // ---------- Model ----------
-
     private async void LoadModel_Click(object sender, RoutedEventArgs e) => await PickModelAsync();
 
     private async Task LoadModelAsync(string path)
@@ -154,31 +142,37 @@ public partial class MainWindow : Window
         {
             await _llm.LoadAsync(path);
             _modelName = Path.GetFileName(path);
-            StatusText.Text = "Model: " + _modelName;
+            string accel = _settings.GpuLayers == 0
+                ? "CPU"
+                : (_settings.GpuLayers < 0 ? "GPU (auto)" : $"GPU ({_settings.GpuLayers} layers)");
+            StatusText.Text = $"Model: {_modelName}  ·  {accel}";
             SendBtn.IsEnabled = true;
             _settings.LastModelPath = path;
             _settings.Save();
 
-            // Clear the welcome bubble and show ready state
             if (_messages.Count == 0)
             {
                 ChatPanel.Children.Clear();
-                AddBubble("Model ready. Ask me anything — KHELRUN AI is unrestricted and private.", false, track: false);
+                AddBubble(
+                    $"Model ready ({accel}). Ask me anything — KHELRUN AI is unrestricted and private.\n" +
+                    "Tip: Open Settings to tune GPU layers, context size, and temperature for maximum speed.",
+                    false, track: false);
             }
         }
         catch (Exception ex)
         {
             StatusText.Text = "Load failed";
-            MessageBox.Show("Could not load the model:\n" + ex.Message, "KHELRUN AI",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(
+                "Could not load the model:\n" + ex.Message +
+                "\n\nTips:\n• Make sure the file is a valid GGUF.\n" +
+                "• If using GPU, try setting GPU layers to 0 (CPU only) in Settings if CUDA/Vulkan is missing drivers.",
+                "KHELRUN AI", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
             SetBusy(false);
         }
     }
-
-    // ---------- Toolbar ----------
 
     private void NewChat_Click(object sender, RoutedEventArgs e) => ClearChat();
 
@@ -189,6 +183,9 @@ public partial class MainWindow : Window
         _messages.Clear();
         _llm.NewChat();
         AddBubble("New conversation started.", false, track: false);
+        StatusText.Text = string.IsNullOrEmpty(_modelName)
+            ? "No model loaded"
+            : $"Model: {_modelName}";
     }
 
     private void WebToggle_Click(object sender, RoutedEventArgs e)
@@ -233,7 +230,7 @@ public partial class MainWindow : Window
 
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
-        var before = (_settings.ContextSize, _settings.Threads);
+        var before = (_settings.ContextSize, _settings.Threads, _settings.GpuLayers, _settings.BatchSize);
         var win = new SettingsWindow(_settings) { Owner = this };
         if (win.ShowDialog() != true) return;
 
@@ -243,11 +240,12 @@ public partial class MainWindow : Window
         TextElement.SetFontSize(ChatPanel, _settings.FontSize);
         WebToggle.IsChecked = _settings.WebSearch;
 
-        bool needsReload = before != (_settings.ContextSize, _settings.Threads);
+        bool needsReload = before != (_settings.ContextSize, _settings.Threads, _settings.GpuLayers, _settings.BatchSize);
         if (needsReload && _llm.IsLoaded && !string.IsNullOrEmpty(_settings.LastModelPath))
         {
             var ans = MessageBox.Show(
-                "Context size or CPU threads changed. Reload the model now to apply them?\n(This starts a new chat.)",
+                "Performance settings (GPU layers, context, threads, or batch size) changed.\n\n" +
+                "Reload the model now to apply them? (This starts a new chat.)",
                 "KHELRUN AI", MessageBoxButton.YesNo, MessageBoxImage.Question);
             if (ans == MessageBoxResult.Yes)
             {
@@ -256,8 +254,6 @@ public partial class MainWindow : Window
             }
         }
     }
-
-    // ---------- Chat ----------
 
     private void Stop_Click(object sender, RoutedEventArgs e) => _cts?.Cancel();
 
@@ -315,8 +311,12 @@ public partial class MainWindow : Window
         finally
         {
             clock.Stop();
-            if (tokens > 0 && clock.Elapsed.TotalSeconds > 0.1)
-                StatusText.Text = $"Model: {_modelName}  ·  {tokens} tokens  ·  {tokens / clock.Elapsed.TotalSeconds:F1} tok/s";
+            if (tokens > 0 && clock.Elapsed.TotalSeconds > 0.05)
+            {
+                double tps = tokens / clock.Elapsed.TotalSeconds;
+                string accel = _settings.GpuLayers == 0 ? "CPU" : "GPU";
+                StatusText.Text = $"Model: {_modelName}  ·  {tokens} tokens  ·  {tps:F1} tok/s  ·  {accel}";
+            }
 
             SetBusy(false);
             StopBtn.Visibility = Visibility.Collapsed;
@@ -341,9 +341,9 @@ public partial class MainWindow : Window
 
         var border = new Border
         {
-            CornerRadius = new CornerRadius(user ? 16 : 16),
+            CornerRadius = new CornerRadius(16),
             Padding = new Thickness(16, 12, 16, 12),
-            Margin = new Thickness(user ? 100 : 0, 6, user ? 0 : 100, 6),
+            Margin = new Thickness(user ? 80 : 0, 6, user ? 0 : 80, 6),
             Child = tb,
             BorderThickness = new Thickness(1),
             BorderBrush = (System.Windows.Media.Brush)FindResource(user ? "AccentDim" : "Border")
@@ -352,7 +352,7 @@ public partial class MainWindow : Window
 
         var menu = new ContextMenu();
         var copy = new MenuItem { Header = "Copy message" };
-        copy.Click += (_, _) => { try { Clipboard.SetText(tb.Text); } catch { /* clipboard busy */ } };
+        copy.Click += (_, _) => { try { Clipboard.SetText(tb.Text); } catch { } };
         menu.Items.Add(copy);
         border.ContextMenu = menu;
 
