@@ -162,6 +162,6 @@ The installed application is additionally covered by [`legal/EULA.txt`](legal/EU
 
 <div align="center">
 
-**KHELRUN AI** &mdash; Private local AI by [James Technology Solutions](https://github.com/<your-username>)
+**KHELRUN AI** &mdash; Private local AI by [James Technology Solutions](https://www.linkedin.com/company/james-technology-solutions))
 
 </div>
