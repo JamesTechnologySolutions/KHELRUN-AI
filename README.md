@@ -152,7 +152,11 @@ Issues and pull requests are welcome. For larger changes, please open an issue f
 
 ## License
 
-See [`legal/EULA.txt`](legal/EULA.txt). <!-- Add a LICENSE file and badge if the source is open. -->
+KHELRUN AI is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE). You are free to view, fork, modify, and contribute to the code for any noncommercial purpose, including personal use, study, research, and use by nonprofits and educational institutions. Commercial use, including selling the software or building a commercial product or service on it, requires a separate written agreement with James Technology Solutions.
+
+This is not an OSI-approved open-source license. For commercial licensing inquiries, contact: `<your-contact-email>`.
+
+The installed application is additionally covered by [`legal/EULA.txt`](legal/EULA.txt).
 
 ---
 
