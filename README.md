@@ -1,13 +1,31 @@
+<div align="center">
+
+<img src="Assets/logo-256.png" alt="KHELRUN AI logo" width="128" />
+
 # KHELRUN AI
 
-**Made by JTS (James Technology Solutions)**
+**Private, offline-capable AI chat for Windows. Your models, your hardware, your data.**
+
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2B%20(x64)-0078D6?logo=windows)](#requirements)
+[![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
+[![Backend](https://img.shields.io/badge/backend-llama.cpp-lightgrey)](https://github.com/ggerganov/llama.cpp)
+[![Runs](https://img.shields.io/badge/runs-100%25%20local-success)](#privacy)
+
+[Features](#features) &nbsp;|&nbsp; [Quick start](#quick-start) &nbsp;|&nbsp; [Build from source](#build-from-source) &nbsp;|&nbsp; [Installer](#create-the-installer) &nbsp;|&nbsp; [Models](#models) &nbsp;|&nbsp; [Privacy](#privacy)
+
+<!-- Replace with a real screenshot or GIF: -->
+<!-- <img src="docs/screenshot-chat.png" alt="KHELRUN AI chat window" width="800" /> -->
+
+</div>
+
+---
 
 A private, unrestricted, offline-capable AI desktop application for Windows.
 Built with WPF and .NET 8. Runs open-source GGUF models locally on **CPU and/or GPU** via llama.cpp (LLamaSharp).
 
-## What it is
+KHELRUN AI is a Windows desktop application that downloads and runs open-source **GGUF** language models directly on your PC through [llama.cpp](https://github.com/ggerganov/llama.cpp) (via LLamaSharp). Conversations stay on your machine, and core functionality requires no cloud account or subscription.
 
-KHELRUN AI is a locally operated AI chat platform. It downloads and runs GGUF language models on your own hardware, keeps conversations on your PC, and does not require a cloud account or subscription for core functionality.
+Built with **WPF** and **.NET 8** by **James Technology Solutions (JTS)**.
 
 ## Highlights (v1.1.1)
 
@@ -36,33 +54,49 @@ KHELRUN AI is a locally operated AI chat platform. It downloads and runs GGUF la
 3. Allow NuGet to restore packages (LLamaSharp + Cpu + Cuda12 + Vulkan backends).
 4. Set configuration to **Release | x64** and run (F5).
 
-## Create the Windows installer
+> **Note:** Unsigned builds trigger a Windows SmartScreen warning. The build script supports code signing if you supply a certificate.
 
 1. Install the .NET 8 SDK and [Inno Setup 7](https://jrsoftware.org/isinfo.php).
 2. From this folder in PowerShell:
 
-   ```powershell
-   .\build.ps1
+## Models
+
+The Models panel lists curated chat models across several size classes:
+
+| Tier | Class |
+|---|---|
+| Quick | 1.5B |
+| Compact | Phi-3.5 Mini |
+| Balanced | 3B |
+| Smart | 7B |
+| Power | 8B |
+
+The catalog favors permissively licensed models (Apache / MIT) so that downloads do not require gated Hugging Face repositories. Any compatible GGUF file can also be imported manually.
+
+## Build from source
+
+**Prerequisites:** Visual Studio 2026 (Visual Studio 2022 also works) with the **.NET desktop development** workload.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/<your-username>/<your-repo>.git
    ```
+2. Open `KhelrunAI.csproj` in Visual Studio.
+3. Allow NuGet to restore packages. If LLamaSharp versions conflict, set `LLamaSharp` and `LLamaSharp.Backend.Cpu` to the same recent version.
+4. Set the configuration to **Release | x64** and run with **F5**.
 
-   Optional code signing:
+## Create the installer
 
-   ```powershell
-   .\build.ps1 -PfxPath C:\path\to\cert.pfx -PfxPassword "your-password"
-   ```
+**Prerequisites:** [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and [Inno Setup](https://jrsoftware.org/isinfo.php) (version 7 recommended; version 6 also works).
 
-3. Output: `dist\KhelrunAI-Setup.exe`
-
-The installer is per-user (no UAC elevation), includes the EULA acceptance page, Start Menu shortcut, optional desktop shortcut, and clean uninstall registration.
-
-## First launch
+From the repository root in PowerShell:
 
 1. The app detects approximate system RAM.
 2. If no model is present and auto-download is enabled, it recommends a model and asks for confirmation.
 3. Progress is shown during download; integrity is checked by content length.
 4. The model is loaded (GPU layers auto-offloaded when possible) and you can start chatting.
 
-You can also open the Models window at any time to download curated models or import a local `.gguf` file.
+Optional code signing:
 
 ## Works on any CPU / any GPU
 
@@ -93,17 +127,25 @@ You do **not** need to install anything extra for CPU mode. For GPU:
 
 ## Models
 
-Curated chat models are listed in the Models panel (Quick 1.5B, Phi-3.5 Mini, Balanced 3B, Smart 7B, Power 8B class options, etc.). Prefer public-license models (Apache / MIT) to avoid gated Hugging Face repositories.
+**Output:** `dist\KhelrunAI-Setup.exe`
 
-Image models can be imported; generation depends on a diffusion backend that can be integrated later. The application does not claim full Stable Diffusion / SDXL / FLUX generation until a backend is connected.
+The installer is per-user (no UAC elevation) and includes an EULA acceptance page, a Start Menu shortcut, an optional desktop shortcut, and clean uninstall registration.
 
 ## Privacy
 
 - Conversations and models stay on your machine by default.
-- Optional web search uses DuckDuckGo’s HTML interface.
-- See `legal/PrivacyPolicy.txt` and `legal/EULA.txt`.
+- Web search is optional and uses DuckDuckGo's HTML interface when enabled.
+- Network access for model downloads occurs only when you download a model.
 
-## Project layout
+See [`legal/PrivacyPolicy.txt`](legal/PrivacyPolicy.txt) and [`legal/EULA.txt`](legal/EULA.txt).
+
+## Limitations
+
+- **CPU only.** GPU acceleration (CUDA, Vulkan, etc.) is not enabled in the current backend. The architecture can be extended with additional LLamaSharp backends.
+- **No image generation yet.** Image model files can be imported and managed, but local diffusion inference requires a compatible backend that has not yet been connected. KHELRUN AI does not currently claim Stable Diffusion, SDXL, or FLUX generation.
+- **Model accuracy.** Language models can produce incorrect information. Verify important facts.
+
+## Project structure
 
 ```
 KhelrunAI/
@@ -126,7 +168,21 @@ KhelrunAI/
   README.md
 ```
 
-## Notes
+## Contributing
+
+Issues and pull requests are welcome. For larger changes, please open an issue first to discuss the proposed change.
+
+## License
+
+KHELRUN AI is **source-available** under the [PolyForm Noncommercial License 1.0.0](LICENSE). You are free to view, fork, modify, and contribute to the code for any noncommercial purpose, including personal use, study, research, and use by nonprofits and educational institutions. Commercial use, including selling the software or building a commercial product or service on it, requires a separate written agreement with James Technology Solutions.
+
+This is not an OSI-approved open-source license. For commercial licensing inquiries, contact: `<your-contact-email>`.
+
+The installed application is additionally covered by [`legal/EULA.txt`](legal/EULA.txt).
+
+---
+
+<div align="center">
 
 - GPU acceleration works when the corresponding backend package is present and the system has working CUDA 12 or Vulkan drivers. The app falls back to CPU gracefully.
 - Always verify important facts; models can produce incorrect information.
