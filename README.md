@@ -20,42 +20,44 @@
 
 ---
 
-## Overview
+A private, unrestricted, offline-capable AI desktop application for Windows.
+Built with WPF and .NET 8. Runs open-source GGUF models locally on **CPU and/or GPU** via llama.cpp (LLamaSharp).
 
 KHELRUN AI is a Windows desktop application that downloads and runs open-source **GGUF** language models directly on your PC through [llama.cpp](https://github.com/ggerganov/llama.cpp) (via LLamaSharp). Conversations stay on your machine, and core functionality requires no cloud account or subscription.
 
 Built with **WPF** and **.NET 8** by **James Technology Solutions (JTS)**.
 
-## Features
+## Highlights (v1.1.1)
 
-| Feature | Description |
-|---|---|
-| **Hardware-aware setup** | Detects available RAM on first launch and recommends the best chat model your machine can realistically run. |
-| **Model library** | Curated GGUF chat models with one-click download, plus import of local `.gguf` files. |
-| **Local, unrestricted chat** | Default and "Unrestricted" system prompt presets. The application applies no content filters of its own to local models. |
-| **Configurable inference** | Temperature, max tokens, context size, CPU threads, system prompt presets, text size, and dark/light themes. |
-| **Performance feedback** | Live token counts and tokens per second, with a Stop button to cancel generation. |
-| **Persistence** | Settings and last-used model are stored under `%AppData%\KhelrunAI\`. |
-| **Export** | Export conversations to Markdown or plain text; right-click any message to copy. |
-| **Optional web search** | Opt-in search via DuckDuckGo's HTML interface. |
-| **Image model tracking** | Import and manage image-generation model files (Safetensors, etc.). See [Limitations](#limitations). |
+- **CPU + GPU acceleration** — Bundles CPU, CUDA 12, and Vulkan backends. Set GPU layers in Settings (Auto / exact count / CPU-only). Dramatically faster inference when a compatible GPU is present.
+- **Hardware-aware model recommendation** — On first launch the app detects available RAM and offers the best chat model that can realistically run on the machine.
+- **Professional UI** — Modern dark/light themes, sidebar navigation, polished chat interface with live tokens/sec feedback.
+- **Model library** — Curated GGUF chat models with one-click download, plus import of local GGUF files.
+- **Image model tracking** — Import and manage compatible image-generation model files (Safetensors, etc.). Full local diffusion inference can be extended with a compatible backend; the library and import path are in place.
+- **Unrestricted local chat** — Default and “Unrestricted” system prompts with no application-level content filters on local models.
+- **Settings** — Theme, text size, system prompt presets, temperature, max tokens, context size, CPU threads, **GPU layers**, batch size, web search, auto-load / auto-download behaviour.
+- **Persistence** — Settings and last-used model stored under `%AppData%\KhelrunAI\`.
+- **Export** — Export conversation to Markdown or plain text; right-click messages to copy.
+- **Performance feedback** — Token counts and tokens/second; Stop button cancels generation.
 
 ## Requirements
 
 - Windows 10 or later (x64)
-- No separate .NET install required (the runtime is bundled in the self-contained build)
-- Sufficient RAM for the chosen model; 8 GB or more is typical for comfortable use of 3B to 8B quantized models
+- .NET 8 runtime is bundled (self-contained publish)
+- Sufficient RAM for the chosen model (typically 8 GB+ for comfortable use of 3B–8B quantized models)
+- Optional: NVIDIA GPU with CUDA 12 drivers **or** any GPU with Vulkan support for acceleration
 
-## Quick start
+## Build (Visual Studio 2022 / 2026)
 
-1. Download `KhelrunAI-Setup.exe` from the [Releases](../../releases) page.
-2. Run the installer (per-user install, no administrator prompt) and accept the EULA.
-3. Launch KHELRUN AI. On first run it detects your RAM and, if no model is present and auto-download is enabled, recommends a model and asks for confirmation.
-4. Wait for the download and model load to complete, then begin chatting.
+1. Install **Visual Studio** with the **.NET desktop development** workload.
+2. Open `KhelrunAI.csproj`.
+3. Allow NuGet to restore packages (LLamaSharp + Cpu + Cuda12 + Vulkan backends).
+4. Set configuration to **Release | x64** and run (F5).
 
 > **Note:** Unsigned builds trigger a Windows SmartScreen warning. The build script supports code signing if you supply a certificate.
 
-You can open the **Models** window at any time to download curated models or import a local `.gguf` file.
+1. Install the .NET 8 SDK and [Inno Setup 7](https://jrsoftware.org/isinfo.php).
+2. From this folder in PowerShell:
 
 ## Models
 
@@ -89,15 +91,41 @@ The catalog favors permissively licensed models (Apache / MIT) so that downloads
 
 From the repository root in PowerShell:
 
-```powershell
-.\build.ps1
-```
+1. The app detects approximate system RAM.
+2. If no model is present and auto-download is enabled, it recommends a model and asks for confirmation.
+3. Progress is shown during download; integrity is checked by content length.
+4. The model is loaded (GPU layers auto-offloaded when possible) and you can start chatting.
 
 Optional code signing:
 
-```powershell
-.\build.ps1 -PfxPath C:\path\to\cert.pfx -PfxPassword "your-password"
-```
+## Works on any CPU / any GPU
+
+KHELRUN AI ships with multiple backends so it runs on essentially any modern Windows x64 PC:
+
+| Hardware | Backend used |
+|----------|--------------|
+| NVIDIA (newer) | CUDA 12 |
+| NVIDIA (older) | CUDA 11 |
+| AMD / Intel / NVIDIA without CUDA | Vulkan |
+| No GPU or drivers missing | Pure CPU (AVX2) |
+
+You do **not** need to install anything extra for CPU mode. For GPU:
+
+- NVIDIA → install a recent Game Ready / Studio driver (CUDA 11 or 12 compatible).
+- AMD / Intel → ensure Vulkan is available (usually already present with current drivers).
+
+### GPU / performance tips
+
+- Open **Settings → Performance & Hardware**.
+- **GPU offload (layers)**:
+  - `-1` (Auto) — recommended. Offloads as many layers as the GPU can hold.
+  - `0` — force pure CPU (useful for debugging or if drivers are missing).
+  - Positive number — exact layer count (tune if you hit out-of-memory).
+- Higher **Batch size** speeds up the initial prompt evaluation.
+- After changing GPU/CPU/context settings, reload the model when prompted.
+- If tokens/sec stays low, try setting GPU layers to 0 then back to Auto, or check that your GPU drivers are up to date.
+
+## Models
 
 **Output:** `dist\KhelrunAI-Setup.exe`
 
@@ -121,29 +149,23 @@ See [`legal/PrivacyPolicy.txt`](legal/PrivacyPolicy.txt) and [`legal/EULA.txt`](
 
 ```
 KhelrunAI/
-|-- KhelrunAI.csproj          Main project
-|-- App.xaml(.cs)
-|-- MainWindow.xaml(.cs)      Chat UI
-|-- ModelsWindow.xaml(.cs)    Model library and downloads
-|-- SettingsWindow.xaml(.cs)
-|-- Services/
-|   |-- AppSettings.cs
-|   |-- LlmService.cs         LLamaSharp chat
-|   |-- ModelCatalog.cs       Curated models and RAM detection
-|   |-- ModelDownloader.cs
-|   |-- ThemeService.cs
-|   `-- WebSearchService.cs
-|-- legal/
-|   |-- EULA.txt
-|   `-- PrivacyPolicy.txt
-|-- Assets/
-|   |-- KhelrunAI.ico         App and installer icon (multi-size)
-|   `-- logo.svg, logo-*.png  Source artwork
-|-- installer/
-|   |-- KhelrunAI.iss         Inno Setup script
-|   `-- images/               Wizard BMP and setup icon
-|-- build.ps1                 Publish and package
-`-- README.md
+  KhelrunAI.csproj          # Main project (CPU + CUDA12 + Vulkan backends)
+  App.xaml / App.xaml.cs
+  MainWindow.xaml(.cs)      # Chat UI
+  ModelsWindow.xaml(.cs)    # Model library & downloads
+  SettingsWindow.xaml(.cs)  # Includes GPU layer controls
+  Services/
+    AppSettings.cs
+    LlmService.cs           # LLamaSharp chat with GPU offload
+    ModelCatalog.cs         # Curated models + RAM detection
+    ModelDownloader.cs
+    ThemeService.cs
+    WebSearchService.cs
+  legal/
+  Assets/
+  installer/
+  build.ps1
+  README.md
 ```
 
 ## Contributing
@@ -162,6 +184,8 @@ The installed application is additionally covered by [`legal/EULA.txt`](legal/EU
 
 <div align="center">
 
-**KHELRUN AI** &mdash; Private local AI by [James Technology Solutions](https://www.linkedin.com/company/james-technology-solutions))
+- GPU acceleration works when the corresponding backend package is present and the system has working CUDA 12 or Vulkan drivers. The app falls back to CPU gracefully.
+- Always verify important facts; models can produce incorrect information.
+- Code signing is supported by the build script when a valid certificate is supplied; unsigned builds will trigger SmartScreen warnings.
 
-</div>
+**KHELRUN AI** — Private local AI by JTS. v1.1.1

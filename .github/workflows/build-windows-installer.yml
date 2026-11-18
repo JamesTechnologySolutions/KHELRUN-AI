@@ -5,9 +5,11 @@ on:
   push:
     branches:
       - main
+      - master
   pull_request:
     branches:
       - main
+      - master
 
 permissions:
   contents: read
@@ -20,6 +22,8 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up .NET 8 SDK
         uses: actions/setup-dotnet@v4
@@ -28,7 +32,9 @@ jobs:
 
       - name: Show tool versions
         shell: pwsh
-        run: dotnet --info
+        run: |
+          dotnet --info
+          git --version
 
       - name: Restore NuGet packages
         run: dotnet restore .\KhelrunAI.csproj --runtime win-x64 --verbosity minimal
@@ -37,35 +43,63 @@ jobs:
         run: dotnet build .\KhelrunAI.csproj -c Release -r win-x64 --no-restore --self-contained true --nologo
 
       - name: Publish self-contained x64
-        run: dotnet publish .\KhelrunAI.csproj -c Release -r win-x64 --self-contained true --no-restore -o .\publish /p:DebugSymbols=false /p:DebugType=None /p:PublishSingleFile=false /p:PublishTrimmed=false /p:UseAppHost=true
+        run: >-
+          dotnet publish .\KhelrunAI.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          --no-restore
+          -o .\publish
+          /p:DebugSymbols=false
+          /p:DebugType=None
+          /p:PublishSingleFile=false
+          /p:PublishTrimmed=false
+          /p:UseAppHost=true
 
       - name: Validate publish output
         shell: pwsh
         run: |
           $exe = Join-Path $PWD 'publish\KhelrunAI.exe'
-          if (-not (Test-Path $exe)) { throw "KhelrunAI.exe was not produced." }
-
-          $models = Get-ChildItem .\publish -Recurse -File | Where-Object {
-            $_.Extension.ToLowerInvariant() -in @('.gguf','.safetensors','.ckpt','.pt','.onnx')
+          if (-not (Test-Path $exe)) {
+            throw "KhelrunAI.exe was not produced at $exe"
           }
-          if ($models) { throw "AI model files must not be bundled in the installer." }
 
-      - name: Install Inno Setup
+          $models = Get-ChildItem .\publish -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Extension.ToLowerInvariant() -in @('.gguf','.safetensors','.ckpt','.pt','.onnx') }
+          if ($models) {
+            $models | ForEach-Object { Write-Host "Forbidden model file: $($_.FullName)" }
+            throw 'AI model files must not be bundled in the installer.'
+          }
+
+          Write-Host "Published files: $((Get-ChildItem .\publish -Recurse -File).Count)"
+          Write-Host "Published size: $([math]::Round(((Get-ChildItem .\publish -Recurse -File | Measure-Object Length -Sum).Sum / 1MB), 2)) MB"
+
+      - name: Install Inno Setup 6
         shell: pwsh
-        run: choco install innosetup --no-progress -y
+        run: choco install innosetup --version=6.7.1 --no-progress -y
 
-      - name: Build KHELRUN AI installer
+      - name: Build installer
         shell: pwsh
         run: |
           $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
-          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler was not found." }
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup compiler was not found at $iscc"
+          }
+
           & $iscc '.\installer\KhelrunAI.iss'
-          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup failed with exit code $LASTEXITCODE"
+          }
 
           $installer = Join-Path $PWD 'dist\KhelrunAI-Setup.exe'
-          if (-not (Test-Path $installer)) { throw "KhelrunAI-Setup.exe was not produced." }
+          if (-not (Test-Path $installer)) {
+            throw "Installer was not produced at $installer"
+          }
 
-      - name: Upload KHELRUN AI installer
+          Write-Host "Installer: $installer"
+          Write-Host "Installer size: $([math]::Round((Get-Item $installer).Length / 1MB, 2)) MB"
+
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: KhelrunAI-Windows-x64-Installer

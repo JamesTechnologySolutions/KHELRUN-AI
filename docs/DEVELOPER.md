@@ -7,14 +7,23 @@ KHELRUN AI is a WPF (.NET 8) desktop application.
 | Layer | Responsibility |
 |-------|----------------|
 | UI (MainWindow, ModelsWindow, SettingsWindow) | Presentation, user interaction, progress display |
-| Services/AppSettings | Persistence of user preferences |
-| Services/LlmService | GGUF model load + streaming chat via LLamaSharp |
+| Services/AppSettings | Persistence of user preferences (incl. GpuLayers, BatchSize) |
+| Services/LlmService | GGUF model load + streaming chat via LLamaSharp (CPU + GPU) |
 | Services/ModelCatalog | Curated model list, RAM detection, recommendation |
 | Services/ModelDownloader | HTTP download with progress and basic integrity check |
 | Services/ThemeService | Dark / light theme switching |
 | Services/WebSearchService | Optional DuckDuckGo HTML search |
 
-Inference is currently **CPU-only** through `LLamaSharp.Backend.Cpu`. GPU backends can be added later by referencing the appropriate LLamaSharp backend package and setting `GpuLayerCount`.
+Inference supports **CPU + GPU**. Packages referenced:
+
+- `LLamaSharp.Backend.Cpu`
+- `LLamaSharp.Backend.Cuda12`
+- `LLamaSharp.Backend.Vulkan`
+
+`ModelParams.GpuLayerCount` controls offload:
+- `-1` / high value → auto / max layers
+- `0` → pure CPU
+- positive → exact layer count
 
 ## Branding rules
 
@@ -37,7 +46,7 @@ There must be **no** remaining "LocalMind" identifiers in user-facing strings, m
 
 Requirements on the build machine:
 - .NET 8 SDK
-- Inno Setup 7 recommended (`ISCC.exe` on PATH or in standard install locations; Inno Setup 6 also works)
+- Inno Setup 7 recommended
 - Optional: Windows SDK `signtool.exe` + a code-signing certificate for signed builds
 
 ## Signing
@@ -72,18 +81,20 @@ Do not expose controls for features the current backend cannot perform.
 - [ ] Model download progress, cancel, and successful load
 - [ ] Import local GGUF and switch models
 - [ ] Chat streaming, Stop, export, copy
-- [ ] Settings persistence across restarts
+- [ ] Settings persistence across restarts (including GPU layers)
 - [ ] Theme switch
-- [ ] Offline operation after models are present (disable network and verify chat still works)
+- [ ] GPU offload (verify with NVIDIA CUDA 12 or Vulkan-capable GPU; tokens/sec should rise significantly)
+- [ ] Force CPU-only mode (GpuLayers = 0) still works
+- [ ] Offline operation after models are present
 - [ ] Uninstall removes application files; user data under AppData can remain
 
-## Known limitations (v1.0)
+## Known limitations (v1.1)
 
-- CPU inference only (no CUDA / Vulkan offload in this package)
 - Image generation is library + import only; no full diffusion pipeline yet
 - Web search depends on DuckDuckGo HTML availability
 - No automatic application update channel in this version (manual reinstall of newer Setup.exe)
+- CUDA requires matching NVIDIA driver + CUDA 12 runtime on the end-user machine
 
 ## Version
 
-Current product version: **1.0.0**
+Current product version: **1.1.1**
